@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+   
+    <title>proyecto VUE </title>
+    <link rel="stylesheet" type="text/css" href="estilos.css"/>
+     <script src="lodash.js"></script>
+    <script src="http://momentjs.com/downloads/moment.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+   
+      
+
+
+
+
+<!--    script para de node-->
+<script>
+    var nombre="";
+  $(function () {
+    var socket = io();
+    $('form').submit(function(e){
+      e.preventDefault(); // prevents page reloading
+      socket.emit(' message', $('#m').val());
+    
+
+   
+  });
+      
+//      escuchas del chat
+       socket.on(' message', function(msg){
+      $('#messages').append($('<li>').text(msg));
+    });
+      
+      
+      socket.on('usuario', function(msg){
+      $('#messages').append($('<li>').text(msg));
+    });
+//      eschuchas del enter
+        $(document).keyup(function(e){
+             if($("#tarea").is(":focus")&&(e.keyCode==13)){
+               
+                mainApp.nuevaTarea(nombre);
+                socket.emit('notasNuevas',mainApp.notas);
+        }
+//            regristo de usuario
+            if($("#logon").is(":focus")&&(e.keyCode==13)){
+               
+    
+			e.preventDefault();
+
+			 nombre = $("#logon").val();
+                
+			if( nombre !== '' ){
+               		
+						//Si es correcto ocultamos el panel de login y asignamos el foco en el chat
+						
+						$('#login-contenedor').slideUp('slow');
+						io.emit('message',nombre+' se ha conectado');
+
+					}
+
+			}
+             
+//		}
+  });
+
+      
+                         
+      
+//      socket.emit('notasNuevas',console.log(mainApp.notas));
+     socket.on('notasNuevas', function(notasNuevas){
+     mainApp.notas=notasNuevas;
+//         for(var j=0; j<notasNuevas.length;j++){
+//             mainApp.notas.push(notasNuevas[j]);
+//         }
+    });
+  });
+
+       //Para evitar fallos en algunos navegador eliminamos el atributo disabled del login y le asignamos foco
+	$('#login input[type=text]').removeAttr('disabled').focus();
+
+
+	//Enviamos el nombre del usuario al pulsar 'enter'
+	$(document).keyup(function(e){
+             
+
+});
+    socket.on('disconnect', function(){
+		alert('Ha ocurrido un error en la conexión con el servidor.');
+		location.reload();
+});
+    
+    
+    
+          
+           
+</script>
+</head>
+<body>
+<!--    logeo-->
+    <div id="login-contenedor">
+			<div id="login">
+				<h3>Introduce tu nombre</h3>
+				<input  id="logon" type="text" name="nick" placeholder="..." maxlength="20">
+				<p class="error"></p>
+			</div>
+    </div>
+    
+
+    <div id="mainApp">
+  
+          <div id="encabezado">
+		<h1>Proyecto Node.js - Ángel Álvarez Burgos</h1>
+         
+         <input  id='tarea' v-model="nueva"  placeholder="Escriba su nueva tarea"> 
+        </div>
+        
+        <div id="encabezado">
+        <p>tienes {{completadas}} tareas pendientes de  {{notas.length}} | |   <a v-on:click="borrarCompletada">X Borrar tareas completadas</a></p>
+            
+            </div>
+        <input  v-model="query"  placeholder="Escribe lo que quieras buscar"> 
+<!--  <button v-on:click="nuevaTarea" > tarea nueva</button>-->
+        
+       
+        <transition-group  name="list" tag="ul" id="tareas">
+        <li v-for="nota in ordenados" :key="nota.pos"> 
+<!--            <h3>Completada={{nota.completada}}</h3>-->
+             <h1  v-if="nota.completada==true" style="color:#24EC1E; text-decoration:line-through;"><img  id=circulo src="check-verde.png" v-on:click="completar(nota.pos)"/>{{ nota.tarea }}  <img class="borrar" src="cierra.png" v-on:click="borrar(nota.pos)"/></h1>
+            <h1 v-else ><img id=circulo src="circulo.png" v-on:click="completar(nota.pos)"/>{{ nota.tarea }}  <img class="borrar" src="cierra.png" v-on:click="borrar(nota.pos)"/></h1> 
+           
+            <p> Prioridad:
+            <template v-if="nota.prioridad==1">
+                <button style="background-color:#36bce8; ">Low </button>
+                <button v-on:click="cambiarPrioridad(2,nota.pos)">Normal</button>
+                <button v-on:click="cambiarPrioridad(3,nota.pos)">Hight ^</button>
+            </template>
+              <template v-if="nota.prioridad==2">
+                <button v-on:click="cambiarPrioridad(1,nota.pos)">Low</button>
+                <button style="background-color:#1e1ee2">Normal</button>
+                <button v-on:click="cambiarPrioridad('3',nota.pos)">Hight ^</button>
+            </template>
+              <template v-if="nota.prioridad==3">
+                <button v-on:click="cambiarPrioridad(1,nota.pos)">Low</button>
+                <button v-on:click="cambiarPrioridad(2,nota.pos)">Normal</button>
+                <button style="background-color:red; ">Hight ^</button>
+            </template>
+             Added {{fechacomputada(nota)}}
+            </p>
+            <p> Creado por  {{nota.usu}}</p>
+            </li>
+            </transition-group>
+        
+
+       
+        
+     
+</div>
+   
+ 
+<!--    chat-->
+    <h3> Chat</h3>
+     <div style=" background-color:antiquewhite; overflow-y: auto; overflow-x:hidden; max-height: 200px ;">
+      
+      
+    <ul id="messages" style="color: black;"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" style="width: 80% ;margin-left:1.5em;" /><button style="margin-left: 5px">Send</button>
+    </form>
+      </div>
+    
+    <!--    subir archivo-->
+    <form action="/" enctype="multipart/form-data" method="post">
+    <input type="file" name="upload" multiple style="width: 50%">
+    <input type="submit" value="Upload" style="width: 50%">
+</form>
+    
+    <footer id="pie">
+<p>Desarrollado por Ángel Álvarez Burgos</p>
+<p>Codigo disponible en  <a href="">Github</a></p>
+</footer>
+    
+    
+    
+    
+<!--    vue-->
+    
+    <script >
+      
+//        aplicacion vue
+        
+    var mainApp = new Vue({
+  el: '#mainApp',
+  data: {
+      notas:[
+      
+  
+      ],
+      nueva:'',
+      query:''
+  },
+       
+         methods: {
+   nuevaTarea: function (nombre) {
+    console.log(nombre);
+      this.notas.push({ pos: (this.notas.length),tarea:this.nueva, prioridad:2 ,fecha:new Date(),completada:false, usu:nombre } )
+       
+      
+      },
+             
+    borrar: function(posicion) {
+		this.notas.splice(posicion, 1);
+		for(var x=0; x<this.notas.length;x++){
+			this.notas[x].pos=x;
+		}
+        
+        io().emit('notasNuevas',this.notas);
+	},
+             
+borrarCompletada: function(){
+     for(var i=0; i<this.notas.length;i++){
+        for(var x=0; x<this.notas.length;x++){
+			if (this.notas[x].completada){
+				this.notas.splice(x, 1);
+			}
+		}
+		for(var x=0; x<this.notas.length;x++){
+			this.notas[x].pos=x;
+		}
+     }
+     io().emit('notasNuevas',this.notas);
+},
+ cambiarPrioridad: function(prio, pos) {
+		this.notas[pos].prioridad=prio;
+      io().emit('notasNuevas',this.notas);
+	},
+//cambiarTarea:function(){
+//   nota.completada=!nota.completada;
+//}
+//             ,
+completar: function( pos){
+		if(this.notas[pos].completada==false){
+			this.notas[pos].completada=true;
+		}else{
+			this.notas[pos].completada=false;
+		}
+     io().emit('notasNuevas',this.notas);
+	},
+                  fechacomputada: function(nota){
+		return moment(nota.fecha, "YYYYMMDD").fromNow();
+	}
+         },
+        computed:{
+            completadas:function(){
+                var completadas=this.notas.filter(function(nota){
+                    return nota.completada==false;
+                })
+                return completadas.length;
+            },
+            
+            ordenados:function(){
+                var vm=this;
+              var ordenar=   _.orderBy(this.notas,['prioridad'],['desc']);
+                return ordenar.filter(function(nota){
+                    return nota.tarea.toLowerCase().indexOf(vm.query.toLowerCase()) !==-1
+                })
+            }
+      
+      
+            
+        }
+        
+    
+});
+    </script>
+    
+   
+</body>
+</html>
+
